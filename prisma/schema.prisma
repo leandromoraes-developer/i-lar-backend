@@ -1,0 +1,107 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id              String           @id()
+  name            String
+  cellPhone       String           @map("cell_phone")
+  email           String
+  cnpj            String           @unique
+  website         String?          @default("")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  BannerCompanies BannerCompanies?
+  House           House[]
+
+  @@map("companies")
+}
+
+model BannerCompanies {
+  id        String   @id()
+  fileName  String   @map("file_name")
+  mimeType  String   @map("mime_type")
+  link      String
+  companyId String?  @unique @map("company_id")
+  company   Company? @relation(fields: [companyId], references: [id])
+
+  @@map("banner_companies")
+}
+
+enum TransactionType {
+  SALE
+  RENT
+}
+
+enum Category {
+  APARTMENT
+  HOUSE
+  LAND
+}
+
+model House {
+  id             String  @id @default(uuid())
+  name           String
+  companyId      String
+  bathrooms      String
+  description    String
+  bedrooms       String
+  area           String
+  houseAddressId String? @map("house_address_id")
+
+  transactionType TransactionType
+  category        Category
+  price           String
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt
+
+  Company      Company       @relation(fields: [companyId], references: [id])
+  HouseAddress HouseAddress?
+  HouseImage   HouseImage[]
+
+  @@map("houses")
+}
+
+model HouseAddress {
+  id           String   @id @default(uuid())
+  street       String
+  number       String
+  neighborhood String
+  city         String
+  state        String
+  latitude     String
+  longitude    String
+  postalCode   String   @map("postal_code")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt
+
+  houseId String @unique @map("house_id")
+  House   House  @relation(fields: [houseId], references: [id])
+
+  @@map("house_address")
+}
+
+model HouseImage {
+  id        String   @id @default(uuid())
+  fileName  String   @map("file_name")
+  mimeType  String   @map("mime_type")
+  url       String
+  houseId   String?  @map("house_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt
+
+  House House? @relation(fields: [houseId], references: [id])
+
+  @@map("house_images")
+}

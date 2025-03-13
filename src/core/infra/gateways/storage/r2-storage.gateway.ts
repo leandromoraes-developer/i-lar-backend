@@ -5,16 +5,16 @@ import {
   IStorageParams,
 } from 'src/core/enterprise/gateways/storage/storage.gateway';
 import { Injectable } from '@nestjs/common';
+import { EnvService } from '../../config/env/env.service';
 
 @Injectable()
 export class R2StorageGateway implements IStorageGateway {
   private client: S3Client;
 
-  constructor() {
-    const accountId = '332ded2152d12800d4dee005781009d9';
-    const accessKeyId = '48731eb4d359ce32c86c7542c12c9e05';
-    const secretAccessKey =
-      '4515f5e6071d8b1e4c6942a93f36f118ae80acf9277b78dacebda5b56059b1e4';
+  constructor(private envService: EnvService) {
+    const accountId = this.envService.get('CLOUDFLARE_ACCOUNT_ID');
+    const accessKeyId = this.envService.get('AWS_SECRET_KEY_ID');
+    const secretAccessKey = this.envService.get('AWS_SECRET_ACCESS_KEY');
 
     this.client = new S3Client({
       endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
@@ -22,12 +22,13 @@ export class R2StorageGateway implements IStorageGateway {
       credentials: {
         accessKeyId,
         secretAccessKey,
+        accountId,
       },
     });
   }
 
   public async uploader(file: IStorageParams): Promise<{ url: string }> {
-    const bucketName = 'casa';
+    const bucketName = file.folder;
     const fileName = this.generateUniqueFileName(file.fileName);
 
     await this.client.send(
